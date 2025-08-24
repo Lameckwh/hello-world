@@ -1,0 +1,58 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: nextjs-pipeline
+spec:
+  params:
+    - name: GIT_REPO
+      type: string
+      default: "https://github.com/Lameckwh/hello-world.git"
+    - name: DIRECTORY
+      type: string
+      default: "source"
+    - name: IMAGE
+      type: string
+      default: "quay.io/youruser/hello-world:latest"
+  workspaces:
+    - name: shared-workspace
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.GIT_REPO)
+        - name: revision
+          value: main
+        - name: subdirectory
+          value: ""
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: lint
+      taskRef:
+        name: lint-code
+        kind: Task
+      params:
+        - name: DIRECTORY
+          value: $(params.DIRECTORY)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - fetch-repository
+    - name: build
+      taskRef:
+        name: build-nextjs
+        kind: Task
+      params:
+        - name: DIRECTORY
+          value: $(params.DIRECTORY)
+        - name: IMAGE
+          value: $(params.IMAGE)
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      runAfter:
+        - lint
