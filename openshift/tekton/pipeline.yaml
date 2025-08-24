@@ -1,0 +1,76 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: build-and-push-pipeline
+  annotations:
+    tekton.dev/displayName: "Build, test, push and deploy pipeline"
+spec:
+  params:
+    - name: git-url
+      description: Git repository URL
+    - name: revision
+      description: Git revision/branch
+      default: main
+    - name: image
+      description: Destination image (e.g. quay.io/user/repo:tag)
+    - name: dockerfile
+      description: Dockerfile path
+      default: Dockerfile
+    - name: manifests
+      description: Path to Kubernetes/OpenShift manifests to apply after push
+      default: deploy
+  workspaces:
+    - name: shared-workspace
+      description: Workspace shared between tasks
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      params:
+        - name: url
+          value: "$(params.git-url)"
+        - name: revision
+          value: "$(params.revision)"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+    - name: npm-test
+      runAfter:
+        - fetch-source
+      taskRef:
+        name: npm-test
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: npm-build
+      runAfter:
+        - npm-test
+      taskRef:
+        name: npm-build
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: kaniko-build
+      runAfter:
+        - npm-build
+      taskRef:
+        name: kaniko-build-push
+      params:
+        - name: IMAGE
+          value: "$(params.image)"
+        - name: DOCKERFILE
+          value: "$(params.dockerfile)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: deploy
+      runAfter:
+        - kaniko-build
+      taskRef:
+        name: oc-apply-deploy
+      params:
+        - name: manifests
+          value: "$(params.manifests)"
+      workspaces:
+        - name: source
+          workspace: shared-workspace

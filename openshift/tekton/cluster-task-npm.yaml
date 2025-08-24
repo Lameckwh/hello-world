@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: ClusterTask
+metadata:
+  name: npm-build
+  annotations:
+    tekton.dev/displayName: "npm build (ClusterTask)"
+    description: "Install dependencies and run the build for a Node.js/Next.js app"
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing source code
+  results: []
+  steps:
+    - name: install
+      image: node:20
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo "Installing dependencies (ci)..."
+        npm ci
+    - name: build
+      image: node:20
+      workingDir: /workspace/source
+      script: |
+        #!/usr/bin/env bash
+        set -euo pipefail
+        echo "Running build..."
+        npm run build
