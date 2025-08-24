@@ -32,7 +32,7 @@ ENV PORT=3000
 
 # Install only production dependencies in runtime image
 COPY package.json package-lock.json* ./
-RUN npm install --omit=dev
+RUN npm ci --omit=dev && rm -rf ~/.npm
 
 # Copy built app and public assets from builder
 COPY --from=builder /opt/app-root/src/.next ./.next
