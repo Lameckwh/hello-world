@@ -12,7 +12,7 @@ WORKDIR /opt/app-root/src
 
 # Install all dependencies (including devDependencies) for build
 COPY package.json package-lock.json* ./
-RUN npm install
+RUN npm ci
 COPY . .
 RUN npm run build
 
