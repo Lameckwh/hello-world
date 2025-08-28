@@ -61,6 +61,31 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
+      # Read and increment version
+      - name: Read and increment version
+        id: version
+        if: github.event_name != 'pull_request'
+        run: |
+          if [ ! -f version.txt ]; then
+            echo "1.0.0" > version.txt
+          fi
+          current_version=$(cat version.txt)
+          IFS='.' read -r major minor patch <<< "$current_version"
+          new_patch=$((patch + 1))
+          new_version="$major.$minor.$new_patch"
+          echo "$new_version" > version.txt
+          echo "version=v$new_version" >> $GITHUB_OUTPUT
+          echo "Current version: $current_version, New version: $new_version"
+
+      - name: Commit version update
+        if: github.event_name != 'pull_request'
+        run: |
+          git config --local user.email "action@github.com"
+          git config --local user.name "GitHub Action"
+          git add version.txt
+          git commit -m "Increment version to ${{ steps.version.outputs.version }}" || echo "No changes to commit"
+          git push || echo "Push failed, possibly no changes"
+
       # Extract metadata (tags, labels) for Docker
       # https://github.com/docker/metadata-action
       - name: Extract Docker metadata
@@ -68,6 +93,12 @@ jobs:
         uses: docker/metadata-action@96383f45573cb7f253c731d3b3ab81c87ef81934 # v5.0.0
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
+          tags: |
+            type=ref,event=branch
+            type=ref,event=pr
+            type=sha,prefix={{branch}}-
+            type=raw,value=latest
+            type=raw,value=${{ steps.version.outputs.version }}
 
       # Build and push Docker image with Buildx (don't push on PR)
       # https://github.com/docker/build-push-action
@@ -96,3 +127,17 @@ jobs:
         # This step uses the identity token to provision an ephemeral certificate
         # against the sigstore community Fulcio instance.
         run: echo "${TAGS}" | xargs -I {} cosign sign --yes {}@${DIGEST}
+
+      - name: Cleanup old images
+        if: github.event_name != 'pull_request'
+        run: |
+          # Install jq
+          sudo apt-get update && sudo apt-get install -y jq
+          # List versions
+          response=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions)
+          # Get ids of versions to delete (all except the 3 most recent)
+          to_delete=$(echo "$response" | jq -r '. | sort_by(.created_at) | reverse | .[3:] | .[].id')
+          # Delete old versions
+          for id in $to_delete; do
+            curl -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions/$id
+          done
