@@ -135,9 +135,23 @@ jobs:
           sudo apt-get update && sudo apt-get install -y jq
           # List versions
           response=$(curl -s -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions)
+          # Check for API errors
+          if echo "$response" | jq -e '.message' > /dev/null 2>&1; then
+            echo "API Error: $(echo "$response" | jq -r '.message')"
+            echo "Skipping cleanup"
+            exit 0
+          fi
+          # Check if response is valid JSON array/object
+          if ! echo "$response" | jq empty > /dev/null 2>&1; then
+            echo "Invalid JSON response: $response"
+            echo "Skipping cleanup"
+            exit 0
+          fi
           # Get ids of versions to delete (all except the 3 most recent)
-          to_delete=$(echo "$response" | jq -r '. | sort_by(.created_at) | reverse | .[3:] | .[].id')
+          to_delete=$(echo "$response" | jq -r '. | sort_by(.created_at) | reverse | .[3:] | .[].id' 2>/dev/null || echo "")
           # Delete old versions
           for id in $to_delete; do
-            curl -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions/$id
+            if [ -n "$id" ]; then
+              curl -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions/$id
+            fi
           done
