@@ -90,9 +90,6 @@ jobs:
         with:
           images: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}
           tags: |
-            type=ref,event=branch
-            type=ref,event=pr
-            type=sha,prefix=sha-
             type=raw,value=latest
             type=raw,value=${{ steps.version.outputs.version }}
 
@@ -143,11 +140,25 @@ jobs:
             echo "Skipping cleanup"
             exit 0
           fi
-          # Get ids of versions to delete (all except the 3 most recent)
-          to_delete=$(echo "$response" | jq -r '. | sort_by(.created_at) | reverse | .[3:] | .[].id' 2>/dev/null || echo "")
-          # Delete old versions
-          for id in $to_delete; do
-            if [ -n "$id" ]; then
-              curl -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions/$id
-            fi
-          done
+          # Get all versions sorted by created_at (newest first)
+          versions=$(echo "$response" | jq -r '. | sort_by(.created_at) | reverse')
+          # Count total versions
+          total_count=$(echo "$versions" | jq -r '. | length')
+          echo "Total versions found: $total_count"
+          # Keep only the 3 most recent, delete the rest
+          if [ "$total_count" -gt 3 ]; then
+            to_delete=$(echo "$versions" | jq -r '.[3:] | .[].id')
+            echo "Will delete $(echo "$to_delete" | wc -l) old versions"
+            # Delete old versions
+            for id in $to_delete; do
+              if [ -n "$id" ]; then
+                echo "Deleting version ID: $id"
+                delete_response=$(curl -s -X DELETE -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" -H "Accept: application/vnd.github+json" https://api.github.com/orgs/${{ github.repository_owner }}/packages/container/hello-world/versions/$id)
+                if [ -n "$delete_response" ]; then
+                  echo "Delete response: $delete_response"
+                fi
+              fi
+            done
+          else
+            echo "Only $total_count versions exist, keeping all"
+          fi
