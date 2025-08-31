@@ -26,7 +26,7 @@ LABEL io.openshift.tags="nextjs,nodejs,ubi9,nodejs20"
 WORKDIR /opt/app-root/src
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ 
 
 
 
