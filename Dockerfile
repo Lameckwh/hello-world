@@ -26,7 +26,7 @@ LABEL io.openshift.tags="nextjs,nodejs,ubi9,nodejs20"
 WORKDIR /opt/app-root/src
 
 ENV NODE_ENV=production
-ENV PORT=3000
+ 
 
 
 
@@ -37,7 +37,5 @@ RUN npm ci --omit=dev && rm -rf ~/.npm
 # Copy built app and public assets from builder
 COPY --from=builder /opt/app-root/src/.next ./.next
 COPY --from=builder /opt/app-root/src/public ./public
-
-EXPOSE 3000
 
 CMD ["npm", "start"]
