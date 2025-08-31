@@ -38,6 +38,4 @@ RUN npm ci --omit=dev && rm -rf ~/.npm
 COPY --from=builder /opt/app-root/src/.next ./.next
 COPY --from=builder /opt/app-root/src/public ./public
 
-EXPOSE 3000
-
 CMD ["npm", "start"]
