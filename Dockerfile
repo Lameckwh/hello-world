@@ -18,5 +18,6 @@ RUN npm ci --omit=dev && rm -rf ~/.npm
 # Copy built app and public assets from builder
 COPY --from=builder /opt/app-root/src/.next ./.next
 COPY --from=builder /opt/app-root/src/public ./public
+EXPOSE 3000
 
 CMD ["npm", "start"]

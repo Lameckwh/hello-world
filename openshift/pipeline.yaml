@@ -1,20 +1,25 @@
+---
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: nextjs-pipeline
+  name: nextjs-build
 spec:
+  workspaces:
+    - name: shared
   params:
+    - name: IMAGE_NAME
+      type: string
+      default: "hello-world"
     - name: GIT_REPO
       type: string
       default: "https://github.com/Lameckwh/hello-world.git"
-    - name: DIRECTORY
+    - name: GIT_REVISION
       type: string
-      default: "source"
-    - name: IMAGE
+      default: "master"
+    - name: APP_PATH
       type: string
-      default: "quay.io/youruser/hello-world:latest"
-  workspaces:
-    - name: shared-workspace
+      default: "."
+
   tasks:
     - name: fetch-repository
       taskRef:
@@ -24,35 +29,80 @@ spec:
         - name: url
           value: $(params.GIT_REPO)
         - name: revision
-          value: main
+          value: $(params.GIT_REVISION)
         - name: subdirectory
           value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: sslVerify
+          value: "false"
       workspaces:
         - name: output
-          workspace: shared-workspace
-    - name: lint
+          workspace: shared
+
+    - name: npm-install
       taskRef:
-        name: lint-code
+        name: npm
         kind: Task
-      params:
-        - name: DIRECTORY
-          value: $(params.DIRECTORY)
       workspaces:
         - name: source
-          workspace: shared-workspace
+          workspace: shared
+      params:
+        - name: CONTEXT
+          value: $(params.APP_PATH)
+        - name: ARGS
+          value: install --no-package-lock
       runAfter:
         - fetch-repository
-    - name: build
+
+    - name: npm-lint
       taskRef:
-        name: build-nextjs
+        name: npm
         kind: Task
-      params:
-        - name: DIRECTORY
-          value: $(params.DIRECTORY)
-        - name: IMAGE
-          value: $(params.IMAGE)
       workspaces:
         - name: source
-          workspace: shared-workspace
+          workspace: shared
+      params:
+        - name: CONTEXT
+          value: $(params.APP_PATH)
+        - name: ARGS
+          value: run lint
       runAfter:
-        - lint
+        - npm-install
+
+    - name: app-version
+      taskRef:
+        name: npm
+        kind: Task
+      workspaces:
+        - name: source
+          workspace: shared
+      params:
+        - name: CONTEXT
+          value: $(params.APP_PATH)
+        - name: ARGS
+          value: version --json | jq -r '.["hello-world"]'
+      runAfter:
+        - npm-install
+
+    - name: build-image
+      taskRef:
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: registry.ocp4.example.com:8443/developer/$(params.IMAGE_NAME):$(tasks.app-version.results.output)
+        - name: DOCKERFILE
+          value: Dockerfile
+        - name: CONTEXT
+          value: $(params.APP_PATH)
+        - name: TLSVERIFY
+          value: "false"
+        - name: SKIP_PUSH
+          value: "true"
+      runAfter:
+        - npm-lint
+        - app-version
+      workspaces:
+        - name: source
+          workspace: shared
