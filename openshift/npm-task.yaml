@@ -21,7 +21,11 @@ spec:
     - name: npm-run
       image: $(params.NODE_IMAGE)
       script: |
-        npm $(params.ARGS) | tee $(results.output.path)
+        set -e
+        cd $(workspaces.source.path)/$(params.CONTEXT)
+        # Execute the command and process output
+        OUTPUT=$(bash -c "npm $(params.ARGS)" 2>/dev/null | tr -d '"' || echo "latest")
+        echo -n "$OUTPUT" | tee $(results.output.path)
       workingDir: $(workspaces.source.path)/$(params.CONTEXT)
       env:
         - name: CI

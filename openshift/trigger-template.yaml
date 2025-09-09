@@ -1,0 +1,36 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: github-push-template
+spec:
+  params:
+    - name: GIT_REPO
+      description: The git repository URL
+    - name: GIT_REVISION
+      description: The git revision (branch, tag, commit)
+    - name: IMAGE_NAME
+      description: The name of the image to build
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: nextjs-build-run-
+      spec:
+        pipelineRef:
+          name: nextjs-build
+        workspaces:
+          - name: shared 
+            persistentVolumeClaim:
+              claimName: shared-workspace # Replace with your actual PVC name
+          - name: dockerconfig
+            secret:
+              secretName: quay-auth-secret
+        params:
+          - name: IMAGE_NAME  
+            value: $(tt.params.IMAGE_NAME)
+          - name: GIT_REPO
+            value: $(tt.params.GIT_REPO)
+          - name: GIT_REVISION
+            value: $(tt.params.GIT_REVISION)
+          - name: APP_PATH
+            value: "."

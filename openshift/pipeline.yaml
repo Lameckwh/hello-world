@@ -6,6 +6,8 @@ metadata:
 spec:
   workspaces:
     - name: shared
+    - name: dockerconfig
+      optional: true
   params:
     - name: IMAGE_NAME
       type: string
@@ -81,7 +83,7 @@ spec:
         - name: CONTEXT
           value: $(params.APP_PATH)
         - name: ARGS
-          value: version --json | jq -r '.["hello-world"]'
+          value: pkg get version
       runAfter:
         - npm-install
 
@@ -91,7 +93,7 @@ spec:
         kind: ClusterTask
       params:
         - name: IMAGE
-          value: registry.ocp4.example.com:8443/developer/$(params.IMAGE_NAME):$(tasks.app-version.results.output)
+          value: quay.io/lmbewe/$(params.IMAGE_NAME):$(tasks.app-version.results.output)
         - name: DOCKERFILE
           value: Dockerfile
         - name: CONTEXT
@@ -99,10 +101,12 @@ spec:
         - name: TLSVERIFY
           value: "false"
         - name: SKIP_PUSH
-          value: "true"
+          value: "false"
       runAfter:
         - npm-lint
         - app-version
       workspaces:
         - name: source
           workspace: shared
+        - name: dockerconfig
+          workspace: dockerconfig

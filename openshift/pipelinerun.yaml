@@ -1,0 +1,23 @@
+apiVersion: tekton.dev/v1  # Corrected to match cluster API version
+kind: PipelineRun
+metadata:
+  name: nextjs-build-run
+spec:
+  pipelineRef:
+    name: nextjs-build
+  workspaces:
+    - name: shared
+      persistentVolumeClaim:
+        claimName: shared-workspace # Replace with your actual PVC name
+    - name: dockerconfig
+      secret:
+        secretName: quay-auth-secret  # Uses the secret you created
+  params:
+    - name: IMAGE_NAME
+      value: "hello-world"
+    - name: GIT_REPO
+      value: "https://github.com/Lameckwh/hello-world.git"
+    - name: GIT_REVISION
+      value: "master"
+    - name: APP_PATH
+      value: "."
