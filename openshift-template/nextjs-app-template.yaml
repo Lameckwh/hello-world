@@ -1,0 +1,87 @@
+---
+apiVersion: template.openshift.io/v1
+kind: Template
+metadata:
+  name: nextjs-app-template
+  annotations:
+    description: "Template for Next.js application"
+    tags: "nextjs,nodejs"
+    iconClass: "icon-nodejs"
+labels:
+  app: nextjs-app
+  template: nextjs-app-template
+
+parameters:
+- name: APP_NAME
+  description: "Name of the application"
+  value: "hello-world"
+  # required: true
+
+- name: GIT_REPO
+  description: "Git repository URL"
+  value: "https://github.com/Lameckwh/hello-world.git"
+  # required: true
+
+- name: GIT_REVISION
+  description: "Git revision (branch, tag, or commit)"
+  # value: "master"
+
+- name: IMAGE_TAG
+  description: "Container image tag"
+  # value: "0.1.0"
+  # required: true
+
+- name: IMAGE_REGISTRY
+  description: "Container image registry"
+  value: "quay.io/lmbewe"
+  # required: true
+
+objects:
+# Deployment for Next.js application
+- apiVersion: apps/v1
+  kind: Deployment
+  metadata:
+    name: ${APP_NAME}
+  spec:
+    replicas: 1
+    selector:
+      matchLabels:
+        app: ${APP_NAME}
+    template:
+      metadata:
+        labels:
+          app: ${APP_NAME}
+      spec:
+        containers:
+        - name: ${APP_NAME}
+          image: ${IMAGE_REGISTRY}/${APP_NAME}:${IMAGE_TAG}
+          ports:
+          - containerPort: 3000
+          env:
+          - name: NODE_ENV
+            value: "production"
+
+# Service for Next.js application
+- apiVersion: v1
+  kind: Service
+  metadata:
+    name: ${APP_NAME}
+  spec:
+    selector:
+      app: ${APP_NAME}  
+    ports:
+    - port: 3000
+      targetPort: 3000
+    type: ClusterIP
+
+# Route for Next.js application
+- apiVersion: route.openshift.io/v1
+  kind: Route
+  metadata:
+    name: ${APP_NAME}
+  spec:
+    to:
+      kind: Service
+      name: ${APP_NAME}
+    port:
+      targetPort: 3000
