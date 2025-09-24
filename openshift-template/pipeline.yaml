@@ -1,0 +1,23 @@
+apiVersion: v1
+metadata:
+  name:
+kind:
+spec:
+  params:
+  workspaces:
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: clusterTask
+      params:
+      workspace:
+        - name:
+          workspace:
+    - name:
+      taskRef:
+        name:
+        value:
+      workspace:
+      runAfter:
+      params:
