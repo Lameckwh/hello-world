@@ -1,6 +1,6 @@
 # DockerHub-based Dockerfile for Next.js app on OpenShift
 # Build stage
-FROM node:20 as builder
+FROM docker.io/library/node:20 AS builder
 WORKDIR /app
 # Install all dependencies (including devDependencies) for build
 COPY package.json package-lock.json* ./
@@ -8,7 +8,7 @@ RUN npm ci
 COPY . .
 RUN npm run build
 
-FROM node:20-slim
+FROM docker.io/library/node:20-slim
 WORKDIR /app
 ENV NODE_ENV=production
 # Install only production dependencies in runtime image

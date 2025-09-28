@@ -14,27 +14,28 @@ labels:
 parameters:
 - name: APP_NAME
   description: "Name of the application"
-  value: "hello-world"
-  # required: true
+  # value: "hello-world"
+  required: true
 
 - name: GIT_REPO
   description: "Git repository URL"
-  value: "https://github.com/Lameckwh/hello-world.git"
-  # required: true
+  # value: "https://github.com/Lameckwh/hello-world.git"
+  required: true
 
 - name: GIT_REVISION
   description: "Git revision (branch, tag, or commit)"
   # value: "master"
+  required: true
 
 - name: IMAGE_TAG
   description: "Container image tag"
   # value: "0.1.0"
-  # required: true
+  required: true
 
 - name: IMAGE_REGISTRY
   description: "Container image registry"
-  value: "quay.io/lmbewe"
-  # required: true
+  # value: "quay.io/lmbewe"
+  required: true
 
 objects:
 # Deployment for Next.js application
