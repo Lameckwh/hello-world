@@ -6,8 +6,7 @@
     "dev": "next dev --turbopack",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint",
-    "install": "npm ci && npm run build"
+    "lint": "next lint"
   },
   "dependencies": {
     "react": "19.1.0",
