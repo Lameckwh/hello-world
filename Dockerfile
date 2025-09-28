@@ -20,6 +20,6 @@ RUN npm ci --omit=dev && rm -rf ~/.npm
 COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 # Document and expose the application port
-EXPOSE 3000
+# EXPOSE 3000
 
 CMD ["npm", "start"]
