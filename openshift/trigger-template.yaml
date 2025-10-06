@@ -1,36 +1,34 @@
 apiVersion: triggers.tekton.dev/v1beta1
-kind: TriggerTemplate
+kind: TriggerTemplate 
 metadata:
-  name: github-push-template
+  name: hello-world-trigger-template
 spec:
   params:
     - name: GIT_REPO
-      description: The git repository URL
+      description: kjnjknjk
     - name: GIT_REVISION
-      description: The git revision (branch, tag, commit)
+      description: lkdfjdsk
     - name: IMAGE_NAME
-      description: The name of the image to build
+      description: ddcdcdc
   resourcetemplates:
     - apiVersion: tekton.dev/v1
-      kind: PipelineRun
+      kind: PipelineRun 
       metadata:
-        generateName: nextjs-build-run-
+        generateName: hello-world-build-run-
       spec:
-        pipelineRef:
-          name: nextjs-build
         workspaces:
-          - name: shared 
+          - name: shared
             persistentVolumeClaim:
-              claimName: shared-workspace # Replace with your actual PVC name
+              claimName: hello-pvc
           - name: dockerconfig
             secret:
-              secretName: quay-auth-secret
+              secretName: github-secret
         params:
-          - name: IMAGE_NAME  
-            value: $(tt.params.IMAGE_NAME)
           - name: GIT_REPO
             value: $(tt.params.GIT_REPO)
           - name: GIT_REVISION
             value: $(tt.params.GIT_REVISION)
-          - name: APP_PATH
-            value: "."
+          - name: IMAGE_NAME
+            value: $(tt.params.IMAGE_NAME)
+        pipelineRef:
+          name: hello-world-pipeline

@@ -1,27 +1,29 @@
----
 apiVersion: tekton.dev/v1
 kind: Pipeline
 metadata:
-  name: nextjs-build
+  name: hello-world-build-and-deploy
 spec:
-  workspaces:
-    - name: shared
-    - name: dockerconfig
-      optional: true
   params:
-    - name: IMAGE_NAME
-      type: string
-      default: "hello-world"
     - name: GIT_REPO
       type: string
-      default: "https://github.com/Lameckwh/hello-world.git"
+      description: The git repository URL to clone
     - name: GIT_REVISION
       type: string
+      description: The git revision (branch, tag, commit) to checkout
       default: "master"
-    - name: APP_PATH
+    - name: CONTEXT
       type: string
+      description: The subdirectory within the repository containing the application code
       default: "."
-
+    - name: IMAGE
+      type: string
+      description: The image URL to push the built application to
+    - name: IMAGE_TAG
+      type: string
+      description: The tag to use for the pushed image
+      default: "latest" 
+  workspaces:
+  - name: shared-workspace
   tasks:
     - name: fetch-repository
       taskRef:
@@ -33,80 +35,42 @@ spec:
         - name: revision
           value: $(params.GIT_REVISION)
         - name: subdirectory
-          value: ""
+          value: $(params.CONTEXT)
         - name: deleteExisting
           value: "true"
         - name: sslVerify
           value: "false"
-      workspaces:
-        - name: output
-          workspace: shared
-
     - name: npm-install
-      taskRef:
-        name: npm
-        kind: Task
-      workspaces:
-        - name: source
-          workspace: shared
-      params:
-        - name: CONTEXT
-          value: $(params.APP_PATH)
-        - name: ARGS
-          value: install --no-package-lock
       runAfter:
         - fetch-repository
-
-    - name: npm-lint
       taskRef:
-        name: npm
-        kind: Task
-      workspaces:
-        - name: source
-          workspace: shared
-      params:
-        - name: CONTEXT
-          value: $(params.APP_PATH)
-        - name: ARGS
-          value: run lint
+        resolver: hub
+        params:
+          - name: catalog
+            value: tekton-catalog-task
+          - name: kind
+            value: task
+          - name: type
+            value: artifact
+          - name: version 
+            value: 0.1.1
+          - name: name
+            value: npm-install
+    - name: npm-run-lint
       runAfter:
         - npm-install
-
-    - name: app-version
       taskRef:
-        name: npm
-        kind: Task
-      workspaces:
-        - name: source
-          workspace: shared
-      params:
-        - name: CONTEXT
-          value: $(params.APP_PATH)
-        - name: ARGS
-          value: pkg get version
-      runAfter:
-        - npm-install
+        resolver: hub
+        params:
+          - name: catalog 
+            value: tekton-catalog-task
+          - name: kind
+            value: task
+          - name: type
+            value: artifact
+          - name: name
+            value: goland-build
+          - name: version
+            value: 0.1.0
 
-    - name: build-image
-      taskRef:
-        name: buildah
-        kind: ClusterTask
-      params:
-        - name: IMAGE
-          value: quay.io/lmbewe/$(params.IMAGE_NAME):$(tasks.app-version.results.output)
-        - name: DOCKERFILE
-          value: Dockerfile
-        - name: CONTEXT
-          value: $(params.APP_PATH)
-        - name: TLSVERIFY
-          value: "false"
-        - name: SKIP_PUSH
-          value: "false"
-      runAfter:
-        - npm-lint
-        - app-version
-      workspaces:
-        - name: source
-          workspace: shared
-        - name: dockerconfig
-          workspace: dockerconfig
+ 

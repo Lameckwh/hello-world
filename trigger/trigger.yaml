@@ -1,0 +1,25 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata:
+  name: hello-world-trigger
+spec:
+  bindings:
+    - ref: hello-world-binding
+  template:
+    ref: hello-world-trigger-template
+  interceptors:
+    - ref: github
+      params:
+        - name: filter
+          value: "body.ref == 'refs/heads/master'"
+        - name: EventTypes
+          value: ["push"]
+        - name: github-webhook-secret
+          value:
+            secretName: github-secret
+            secretKey: secret
+    - ref: cel
+      params: 
+        - name: filter
+          value:  "body.ref == 'refs/heads/master'" 
+    

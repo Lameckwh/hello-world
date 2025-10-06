@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerBinding
+metadata:
+  name: hello-world-trigger-binding
+specs:
+  params:
+    - name: GIT_REPO
+      value: $(body.clone_url)
+    - name: GIT_REVISION
+      value: $(body.commid.id)
+    - name: IMAGE_NAME
+      value: $(body.repository.name)
