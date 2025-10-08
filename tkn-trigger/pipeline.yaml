@@ -1,0 +1,27 @@
+apiVersion: v1
+kind: Pipeline 
+metadata: 
+  name: hello-world-pipeline
+spec:
+  params: 
+    - name: git-url
+      type: string
+      default:
+    - name: revision
+      type: string
+      default:
+  workspaces:
+    - name: shared
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
+        kind: ClusterTask
+      workspaces:
+        - name: output
+          workspace: shared
+      params:
+        - name: GIT_REPO
+          value: $(params.git-url)
+        - name: GIT_REVISION
+          value: $(params.revision)
