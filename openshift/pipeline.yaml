@@ -28,6 +28,25 @@ spec:
     - name: fetch-repository
       taskRef:
         name: git-clone
+        kind: ClusterTask 
+      params:
+        - name: url
+          value: $(params.GIT_REPO)
+        - name: revision
+          value: $(params.GIT_REVISION)
+        - name: subdirectory
+          value: $(params.CONTEXT)
+        - name: deleteExisting
+          value: "true"
+        - name: sslVerify
+          value: "false"
+      workspaces:
+        - name: output
+          workspace: shared-workspace 
+    
+    - name: fetch-repository
+      taskRef:
+        name: git-clone
         kind: ClusterTask
       params:
         - name: url
