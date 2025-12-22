@@ -1,0 +1,180 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: hello-world-build-and-deploy
+spec:
+  params:
+    - name: GIT_REPO
+      type: string
+      description: The git repository URL to clone
+    - name: GIT_REVISION
+      type: string
+      description: The git revision (branch, tag, commit) to checkout
+      default: "master"
+    - name: CONTEXT
+      type: string
+      description: The subdirectory within the repository containing the application code
+      default: "."
+    - name: IMAGE
+      type: string
+      description: The image URL to push the built application to
+    - name: IMAGE_TAG
+      type: string
+      description: The tag to use for the pushed image
+      default: "latest"
+    - name: APP_NAME
+      type: string
+      description: The name of the application
+      default: "hello-world"
+  workspaces:
+    - name: shared-workspace
+    - name: dockerconfig
+      optional: true
+  tasks:
+    - name: fetch-repository
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: git-clone
+        kind: ClusterTask
+      params:
+        - name: url
+          value: $(params.GIT_REPO)
+        - name: revision
+          value: $(params.GIT_REVISION)
+        - name: subdirectory
+          value: ""
+        - name: deleteExisting
+          value: "true"
+        - name: sslVerify
+          value: "false"
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+
+    - name: npm-install
+      runAfter:
+        - fetch-repository
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: npm
+        kind: Task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: CONTEXT
+          value: $(params.CONTEXT)
+        - name: ARGS
+          value: "install --no-package-lock"
+
+    - name: npm-lint
+      runAfter:
+        - npm-install
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: npm
+        kind: Task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: CONTEXT
+          value: $(params.CONTEXT)
+        - name: ARGS
+          value: "run lint"
+
+    - name: npm-build
+      runAfter:
+        - npm-lint
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: npm
+        kind: Task
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: CONTEXT
+          value: $(params.CONTEXT)
+        - name: ARGS
+          value: "run build"
+
+    - name: build-image
+      runAfter:
+        - npm-build
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: buildah
+        kind: ClusterTask
+      params:
+        - name: IMAGE
+          value: "$(params.IMAGE):$(params.IMAGE_TAG)"
+        - name: DOCKERFILE
+          value: "./Dockerfile"
+        - name: CONTEXT
+          value: $(params.CONTEXT)
+        - name: TLSVERIFY
+          value: "false"
+        - name: SKIP_PUSH
+          value: "false"
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+        - name: dockerconfig
+          workspace: dockerconfig
+
+    - name: deploy-app
+      runAfter:
+        - build-image
+      taskRef:
+        apiVersion: tekton.dev/v1
+        name: openshift-client
+        kind: ClusterTask
+      params:
+        - name: SCRIPT
+          value: |
+            # Create or update app using oc new-app
+            oc new-app $(params.IMAGE):$(params.IMAGE_TAG) \
+              --name=$(params.APP_NAME) \
+              --env NODE_ENV=production \
+              --env PORT=3000 \
+              --labels app=$(params.APP_NAME) \
+              --dry-run=client -o yaml | oc apply -f -
+            
+            # Expose the service as a route with HTTPS
+            oc expose service $(params.APP_NAME) --hostname="" || echo "Route may already exist"
+            oc patch route $(params.APP_NAME) -p '{"spec":{"tls":{"termination":"edge","insecureEdgeTerminationPolicy":"Redirect"}}}' || true
+            
+            # Add health checks to deployment
+            oc patch deployment $(params.APP_NAME) -p '{
+              "spec": {
+                "template": {
+                  "spec": {
+                    "containers": [{
+                      "name": "$(params.APP_NAME)",
+                      "livenessProbe": {
+                        "httpGet": {
+                          "path": "/api/health",
+                          "port": 3000
+                        },
+                        "initialDelaySeconds": 30,
+                        "periodSeconds": 10
+                      },
+                      "readinessProbe": {
+                        "httpGet": {
+                          "path": "/api/health",
+                          "port": 3000
+                        },
+                        "initialDelaySeconds": 5,
+                        "periodSeconds": 5
+                      }
+                    }]
+                  }
+                }
+              }
+            }'
+            
+            echo "Application deployed successfully!"
+            echo "Route URL: https://$(oc get route $(params.APP_NAME) -o jsonpath='{.spec.host}')"
+
+ 

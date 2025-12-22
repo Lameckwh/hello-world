@@ -4,4 +4,4 @@ metadata:
   name: github-listener
 spec:
   triggers:
-  - triggerRef: github-push-trigger
+    - triggerRef: hello-world-push

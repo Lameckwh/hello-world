@@ -1,0 +1,41 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: TriggerTemplate
+metadata:
+  name: hello-world-trigger-template
+spec:
+  params:
+    - name: GIT_REPO
+      description: The git repository URL
+    - name: GIT_REVISION
+      description: The git revision (branch, tag, or commit)
+    - name: IMAGE_NAME
+      description: The name of the image to build
+  resourcetemplates:
+    - apiVersion: tekton.dev/v1
+      kind: PipelineRun
+      metadata:
+        generateName: hello-world-build-run-
+      spec:
+        pipelineRef:
+          name: hello-world-build-and-deploy
+        workspaces:
+          - name: shared-workspace
+            persistentVolumeClaim:
+              claimName: shared-workspace
+          - name: dockerconfig
+            secret:
+              secretName: quay-auth-secret
+        params:
+          - name: GIT_REPO
+            value: $(tt.params.GIT_REPO)
+          - name: GIT_REVISION
+            value: $(tt.params.GIT_REVISION)
+          - name: CONTEXT
+            value: "."
+          - name: IMAGE
+            value: "quay.io/lmbewe/$(tt.params.IMAGE_NAME)"
+          - name: IMAGE_TAG
+            value: "latest"
+          - name: APP_NAME
+            value: $(tt.params.IMAGE_NAME)
+        serviceAccountName: pipeline
