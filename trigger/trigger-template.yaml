@@ -1,27 +1,25 @@
----
 apiVersion: triggers.tekton.dev/v1beta1
 kind: TriggerTemplate
 metadata:
-  name: hello-world-trigger-template
+  name: hello-world-template
 spec:
   params:
     - name: GIT_REPO
-      description: vdsfdfd
-    - name: GIT_IMAGE
-      description: dsvfvcx
+      description: hhhh
     - name: GIT_REVISION
-      description: dssvcvx
-  resourcetemplates:
-    - apiVersion: v1
-      kind: PipelineRun
+      description: ggddd
+    - name: APP_NAME
+      description: fregrthr
+   resourcetemplates:
+     - apiVersion: tekton.dev/v1beta1
+       kind: PipelineRun
       metadata:
-        generateName: nodejs-push-build-
+        generate: hello-world-run-
       spec:
+        serviceAccountName: pipeline
+        pipelineRef:
+          - name: hello-world-build
         params:
           - name: GIT_REPO
-            value: (tt.params.GIT_REPO)
-        workspaces:
-          - shared
-          - github-secret
-        pipelineRef:
-          - name: fdbvcbcvc
+            value: $(tt.params.)
+          - name: 

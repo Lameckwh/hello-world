@@ -24,7 +24,7 @@ spec:
               claimName: shared-workspace
           - name: dockerconfig
             secret:
-              secretName: quay-auth-secret
+              secretName: dockerconfig
         params:
           - name: GIT_REPO
             value: $(tt.params.GIT_REPO)

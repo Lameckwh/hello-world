@@ -3,5 +3,6 @@ kind: EventListener
 metadata:
   name: github-listener
 spec:
+  serviceAccountName: pipeline
   triggers:
     - triggerRef: hello-world-push

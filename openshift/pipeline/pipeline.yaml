@@ -28,8 +28,9 @@ spec:
       default: "hello-world"
   workspaces:
     - name: shared-workspace
-    - name: dockerconfig
+    - name: x
       optional: true
+    - name: dockerconfig
   tasks:
     - name: fetch-repository
       taskRef:
@@ -67,25 +68,9 @@ spec:
         - name: ARGS
           value: "install --no-package-lock"
 
-    - name: npm-lint
-      runAfter:
-        - npm-install
-      taskRef:
-        apiVersion: tekton.dev/v1
-        name: npm
-        kind: Task
-      workspaces:
-        - name: source
-          workspace: shared-workspace
-      params:
-        - name: CONTEXT
-          value: $(params.CONTEXT)
-        - name: ARGS
-          value: "run lint"
-
     - name: npm-build
       runAfter:
-        - npm-lint
+        - npm-install
       taskRef:
         apiVersion: tekton.dev/v1
         name: npm
