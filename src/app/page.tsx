@@ -12,7 +12,7 @@ export default function Home() {
         </h1>
         <Calculator />
         <p className="text-indigo-200/60 text-sm font-medium tracking-wide">
-          Designed with Next.js & Tailwind CSS
+          Designed with Next.js & Tailwind CSS by Lameck Mbewe
         </p>
       </div>
     </main>
