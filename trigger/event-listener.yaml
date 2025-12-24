@@ -3,5 +3,6 @@ kind: EventListener
 metadata:
   name: hello-world-listener
 spec:
+  serviceAccountName: pipeline
   triggers:
-    - triggerRef: hello-world-trigger
+    - triggerRef: hello-world-push

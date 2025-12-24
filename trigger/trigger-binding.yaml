@@ -9,5 +9,4 @@ spec:
     - name: GIT_REVISION
       value: $(body.head_commit.id)
     - name: APP_NAME
-      value: $(body.repository.name)
-
+      value: $(body.repository.name) 
