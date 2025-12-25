@@ -41,15 +41,15 @@ spec:
         - name: namespace
           value: openshift-pipelines
       params:
-        - name: url
+        - name: URL
           value: $(params.GIT_REPO)
-        - name: revision
+        - name: REVISION
           value: $(params.GIT_REVISION)
-        - name: subdirectory
+        - name: SUBDIRECTORY
           value: ""
-        - name: deleteExisting
+        - name: DELETE_EXISTING
           value: "true"
-        - name: sslVerify
+        - name: SSL_VERIFY
           value: "false"
       workspaces:
         - name: output
