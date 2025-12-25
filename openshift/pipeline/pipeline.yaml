@@ -28,8 +28,6 @@ spec:
       default: "hello-world"
   workspaces:
     - name: shared-workspace
-    - name: x
-      optional: true
     - name: dockerconfig
   tasks:
     - name: fetch-repository
