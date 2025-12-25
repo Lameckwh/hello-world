@@ -32,9 +32,14 @@ spec:
   tasks:
     - name: fetch-repository
       taskRef:
-        apiVersion: tekton.dev/v1
-        name: git-clone
-        kind: ClusterTask
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: git-clone
+        - name: namespace
+          value: openshift-pipelines
       params:
         - name: url
           value: $(params.GIT_REPO)
@@ -86,9 +91,14 @@ spec:
       runAfter:
         - npm-build
       taskRef:
-        apiVersion: tekton.dev/v1
-        name: buildah
-        kind: ClusterTask
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: buildah
+        - name: namespace
+          value: openshift-pipelines
       params:
         - name: IMAGE
           value: "$(params.IMAGE):$(params.IMAGE_TAG)"
@@ -110,9 +120,14 @@ spec:
       runAfter:
         - build-image
       taskRef:
-        apiVersion: tekton.dev/v1
-        name: openshift-client
-        kind: ClusterTask
+        resolver: cluster
+        params:
+        - name: kind
+          value: task
+        - name: name
+          value: openshift-client
+        - name: namespace
+          value: openshift-pipelines
       params:
         - name: SCRIPT
           value: |
