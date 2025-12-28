@@ -1,6 +1,6 @@
 # UBI-based Dockerfile for Next.js app on OpenShift
 # Build stage
-FROM nodejs-20 as builder
+FROM registry.access.redhat.com/ubi9/nodejs-20 as builder
 
 LABEL maintainer="Lameck Mbewe <lmbewe@mitra.mw>"
 LABEL io.openshift.expose-services="3000:http"
@@ -17,7 +17,7 @@ COPY . .
 RUN npm run build
 
 
-FROM nodejs-20-minimal
+FROM registry.access.redhat.com/ubi9/nodejs-20-minimal
 
 LABEL maintainer="Lameck Mbewe <lmbewe@mitra.mw>"
 LABEL io.openshift.expose-services="3000:http"
@@ -27,8 +27,6 @@ WORKDIR /opt/app-root/src
 
 ENV NODE_ENV=production
 ENV PORT=3000
-
-
 
 # Install only production dependencies in runtime image
 COPY package.json package-lock.json* ./
