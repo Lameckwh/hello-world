@@ -1,0 +1,10 @@
+apiVersion: tekton.dev/v1
+kind: Pipeline
+metadata:
+  name: nextjs-build
+spec:
+  params:
+    - name: git-url
+      type: string
+      description: The github repository url 
+      

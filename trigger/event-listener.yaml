@@ -1,8 +1,7 @@
 apiVersion: triggers.tekton.dev/v1beta1
 kind: EventListener
 metadata:
-  name: hello-world-listener
+  name: hello-world-lister 
 spec:
-  serviceAccountName: pipeline
   triggers:
-    - triggerRef: hello-world-push
+    - triggerRef: hello-world-trigger
