@@ -1,0 +1,12 @@
+apiVersion: triggers.tekton.dev/v1beta1
+kind: Trigger
+metadata: 
+  name: hello-build-trigger
+spec:
+  bindings:
+    - ref: hello-binding
+  template:
+    ref: hello-trigger-template
+  inteceptors:
+
+

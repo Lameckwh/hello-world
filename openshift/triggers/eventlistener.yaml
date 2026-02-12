@@ -6,3 +6,5 @@ spec:
   serviceAccountName: pipeline
   triggers:
     - triggerRef: hello-world-push
+    - triggerRef: hello-world-pr
+

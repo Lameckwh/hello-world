@@ -1,6 +1,6 @@
 # UBI-based Dockerfile for Next.js app on OpenShift
 # Build stage
-FROM registry.access.redhat.com/ubi9/nodejs-20 as builder
+FROM nodejs-20:latest as builder
 
 LABEL maintainer="Lameck Mbewe <lmbewe@mitra.mw>"
 LABEL io.openshift.expose-services="3000:http"
