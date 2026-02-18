@@ -1,9 +1,11 @@
 #!/bin/bash
 set -e
 
-echo "Assembling the application..."
-# Export environment variable for port
+# Build-time environment
 export PORT=3000
 
-# Run default S2I assemble for Node.js
-/usr/libexec/s2i/assemble
+echo "Assembling application with PORT=$PORT"
+
+# Install dependencies and build
+npm install
+npm run build

@@ -1,8 +1,10 @@
 #!/bin/bash
 set -e
 
-echo "Starting the application..."
+# Runtime environment
 export PORT=3000
 
-# Run default S2I run script
-/usr/libexec/s2i/run
+echo "Running application on PORT=$PORT"
+
+# Start the app in production
+npm start
