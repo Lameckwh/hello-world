@@ -6,5 +6,7 @@ export PORT=3000
 
 echo "Running application on PORT=$PORT"
 
-# Start the app in production
+cd /opt/app-root/src || exit 1
+
+# Start the app
 npm start

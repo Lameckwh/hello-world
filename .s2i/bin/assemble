@@ -6,6 +6,9 @@ export PORT=3000
 
 echo "Assembling application with PORT=$PORT"
 
+# Go into the source code directory
+cd /tmp/src || exit 1
+
 # Install dependencies and build
 npm install
 npm run build
